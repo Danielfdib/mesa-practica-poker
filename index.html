@@ -776,7 +776,7 @@ function renderControls(h){
   }
   $('raiseAmt').disabled=!canRaise;$('bRaise').disabled=!canRaise;
   const inp=$('raiseAmt');inp.min=fmt(min);inp.max=fmt(max);
-  if(!inp.value||document.activeElement!==inp)inp.value=fmt(min);
+  if(!inp.value||document.activeElement!==inp)inp.value=fmt(out.length?out[0].to:min);
   $('bRaise').textContent=h.currentBet>0?'Subir a':'Apostar';
 }
 
