@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lecciones · Poker NL2</title>
+<meta name="description" content="8 lecciones de poker NL Hold'em 6-max con ejercicios corregidos: posición, pot odds, postflop, bankroll, rangos, 3-bets, EV, SPR y MDF.">
+<meta name="author" content="Estudio Raíz">
+<link rel="canonical" href="https://mesa-practica-poker.vercel.app/lecciones">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="stylesheet" href="assets/escuela.css">
+</head>
+<body>
+<header class="esc-nav"><div class="in">
+  <a class="esc-brand" href="./"><img src="assets/logo.svg" alt="" width="28" height="28">Poker NL2</a>
+  <nav class="esc-links" aria-label="Secciones">
+    <a href="./">Inicio</a><a href="lecciones" aria-current="page">Lecciones</a><a href="mesa">Mesa de práctica</a><a href="calculadoras">Calculadoras</a>
+  </nav>
+</div></header>
+
+<main class="wrap lec-layout">
+  <nav class="lec-side" id="side" aria-label="Lecciones"></nav>
+  <article class="lec" id="lec" aria-live="polite"></article>
+</main>
+
+<script src="assets/lecciones-data.js"></script>
+<script src="assets/escuela.js"></script>
+<script>
+(function () {
+  var side = document.getElementById("side"), box = document.getElementById("lec");
+
+  function actual() {
+    var h = location.hash.replace("#", "");
+    if (h === "reglas") return "reglas";
+    var n = parseInt(h, 10);
+    return LECCIONES.some(function (l) { return l.id === n; }) ? n : 1;
+  }
+
+  function menu(sel) {
+    var s = Escuela.estado();
+    side.innerHTML = LECCIONES.map(function (l) {
+      var ok = s.lecciones[l.id] && s.lecciones[l.id].hecha;
+      return '<a href="#' + l.id + '"' + (sel === l.id ? ' aria-current="true"' : "") + "><span>" + l.icono + "</span><span>" + l.id + ". " + l.titulo + "</span>" + (ok ? '<span class="tick" aria-label="completada">✓</span>' : "") + "</a>";
+    }).join("") + '<a href="#reglas"' + (sel === "reglas" ? ' aria-current="true"' : "") + "><span>⭐</span><span>Reglas de oro</span></a>";
+  }
+
+  function navInferior(id) {
+    var prev = id > 1 ? '<a class="btn" href="#' + (id - 1) + '">← Lección ' + (id - 1) + "</a>" : "<span></span>";
+    var next = id < LECCIONES.length ? '<a class="btn primary" href="#' + (id + 1) + '">Lección ' + (id + 1) + " →</a>" : '<a class="btn primary" href="#reglas">Reglas de oro →</a>';
+    return '<div class="lec-nav">' + prev + next + "</div>";
+  }
+
+  function leccion(l) {
+    var q = l.quiz.map(function (p, i) {
+      return '<div class="preg" data-i="' + i + '"><p>' + (i + 1) + ". " + p.q + '</p><div class="ops">' +
+        p.ops.map(function (o, j) { return '<button type="button" class="op" data-j="' + j + '">' + o + "</button>"; }).join("") +
+        '</div><p class="por" hidden></p></div>';
+    }).join("");
+    box.innerHTML =
+      '<p class="eyebrow">Lección ' + l.id + " de " + LECCIONES.length + " · " + l.minutos + " min</p>" +
+      "<h2>" + l.icono + " " + l.titulo + "</h2>" +
+      '<p class="meta">' + l.resumen + "</p>" + l.html +
+      '<section class="quiz"><h3>✍️ Ejercicios</h3><p class="nota">Elegí una opción: te mostramos la corrección al instante.</p>' + q +
+      '<div class="resultado" id="res" hidden></div></section>' + navInferior(l.id);
+
+    var aciertos = 0, respondidas = 0;
+    box.querySelectorAll(".preg").forEach(function (div) {
+      var p = l.quiz[+div.dataset.i];
+      div.querySelectorAll(".op").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var j = +b.dataset.j, bien = j === p.ok;
+          div.querySelectorAll(".op").forEach(function (x) {
+            x.disabled = true;
+            if (+x.dataset.j === p.ok) x.classList.add("bien");
+          });
+          if (!bien) b.classList.add("mal");
+          var por = div.querySelector(".por");
+          por.innerHTML = (bien ? '<b class="bien">¡Correcto!</b> ' : '<b class="mal">No exactamente.</b> ') + p.por;
+          por.hidden = false;
+          respondidas++; if (bien) aciertos++;
+          if (respondidas === l.quiz.length) terminar(l, aciertos);
+        });
+      });
+    });
+  }
+
+  function terminar(l, aciertos) {
+    Escuela.guardarLeccion(l.id, aciertos, l.quiz.length);
+    var res = document.getElementById("res");
+    var msg = aciertos === l.quiz.length ? "🏆 ¡Perfecto!" : aciertos >= 2 ? "👍 ¡Bien!" : "📖 Conviene repasarla.";
+    res.innerHTML = "<span><b>" + msg + "</b> " + aciertos + " de " + l.quiz.length + " correctas. Lección completada.</span>" +
+      (aciertos < l.quiz.length ? '<button type="button" class="btn" id="otra">Intentar de nuevo</button>' : '<a class="btn" href="mesa">Practicar en la mesa</a>');
+    res.hidden = false;
+    var otra = document.getElementById("otra");
+    if (otra) otra.addEventListener("click", function () { leccion(l); box.querySelector(".quiz").scrollIntoView({ behavior: "smooth" }); });
+    menu(l.id);
+  }
+
+  function reglas() {
+    box.innerHTML = '<div class="reglas"><p class="eyebrow">Repaso</p><h2>⭐ Reglas de oro</h2>' +
+      '<p class="meta">Las conclusiones de todo el curso, una por línea. Leelas antes de cada sesión.</p>' +
+      REGLAS.map(function (g) { return "<h3>" + g.grupo + "</h3><ul>" + g.items.map(function (i) { return "<li>" + i + "</li>"; }).join("") + "</ul>"; }).join("") +
+      '<div class="lec-nav"><a class="btn" href="#' + LECCIONES.length + '">← Lección ' + LECCIONES.length + '</a><a class="btn primary" href="mesa">Ir a la mesa →</a></div></div>';
+  }
+
+  function mostrar() {
+    var id = actual();
+    menu(id);
+    if (id === "reglas") reglas(); else leccion(LECCIONES.find(function (l) { return l.id === id; }));
+    document.title = (id === "reglas" ? "Reglas de oro" : "Lección " + id) + " · Poker NL2";
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", mostrar);
+  mostrar();
+})();
+</script>
+
+<!-- ER-CREDIT:START · Pie de Estudio Raíz (no editar a mano: se regenera igual en todos los proyectos) -->
+<style>
+.er-credit{all:initial;display:block;box-sizing:border-box;width:100%;margin:0;padding:18px 16px 22px;background:#0B283D;color:#DCE3E8;font:400 13px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;position:relative;z-index:1}
+.er-credit *{box-sizing:border-box}
+.er-credit a{color:#F9F6F1;text-decoration:none}
+.er-credit a:hover,.er-credit a:focus-visible{text-decoration:underline;text-underline-offset:2px}
+.er-credit__brand{display:inline-flex;align-items:center;gap:10px;font-size:14px}
+.er-credit__brand img{width:30px;height:30px;border-radius:7px;display:block}
+.er-credit__brand strong{font-weight:600;letter-spacing:.2px}
+.er-credit__links{margin:8px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px}
+.er-credit__legal{margin:8px 0 0;font-size:11.5px;color:#9FB0BC}
+</style>
+<footer class="er-credit" aria-label="Créditos">
+  <a class="er-credit__brand" href="https://estudio-raiz.vercel.app" target="_blank" rel="noopener">
+    <img src="assets/estudio-raiz.svg" alt="" width="30" height="30">
+    <span>Desarrollado por <strong>Estudio Raíz</strong></span>
+  </a>
+  <p class="er-credit__links">
+    <a href="https://wa.me/5492216823580" target="_blank" rel="noopener">WhatsApp</a>
+    <a href="mailto:daniel.franco.dib@gmail.com">Email</a>
+    <a href="https://estudio-raiz.vercel.app/privacidad" target="_blank" rel="noopener">Privacidad</a>
+    <a href="https://estudio-raiz.vercel.app/terminos" target="_blank" rel="noopener">Términos</a>
+  </p>
+  <p class="er-credit__legal">© 2026 Estudio Raíz · Marca en trámite ante el INPI (Acta N.º 4780707) · San Miguel de Tucumán, Argentina</p>
+</footer>
+<!-- ER-CREDIT:END -->
+</body>
+</html>

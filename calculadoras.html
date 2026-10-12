@@ -1,0 +1,538 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calculadoras · Poker NL2</title>
+<meta name="description" content="Rangos preflop por posici&oacute;n, outs y pot odds, bankroll y checklist antes de jugar poker NL2.">
+<meta name="author" content="Estudio Ra&iacute;z">
+<link rel="canonical" href="https://mesa-practica-poker.vercel.app/calculadoras">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/nav.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#EEF1EE; --surface:#FFFFFF; --surface2:#F6F8F6; --ink:#15201B; --muted:#5A6862; --line:#D6DDD8;
+  --felt:#1E6B4F; --felt-ink:#FFFFFF; --red:#BF3A30; --red-ink:#FFFFFF; --amber:#E0A93B; --amber-ink:#2A1E05;
+  --fold:#E7ECE8; --fold-ink:#8C9A93; --focus:#1E6B4F;
+  --good:#1E6B4F; --bad:#BF3A30;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1411; --surface:#151E1A; --surface2:#1A2520; --ink:#E5ECE8; --muted:#94A39B; --line:#28362F;
+    --felt:#3FA57C; --felt-ink:#07130D; --red:#E0645A; --red-ink:#1A0605; --amber:#E7B653; --amber-ink:#1F1603;
+    --fold:#1F2A25; --fold-ink:#5E6E66; --focus:#3FA57C; --good:#4FB88C; --bad:#E0645A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1411; --surface:#151E1A; --surface2:#1A2520; --ink:#E5ECE8; --muted:#94A39B; --line:#28362F;
+  --felt:#3FA57C; --felt-ink:#07130D; --red:#E0645A; --red-ink:#1A0605; --amber:#E7B653; --amber-ink:#1F1603;
+  --fold:#1F2A25; --fold-ink:#5E6E66; --focus:#3FA57C; --good:#4FB88C; --bad:#E0645A;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:24px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.label{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}
+.suits{font-size:22px;letter-spacing:.25em;font-family:var(--body)}
+.suits .r{color:var(--red)}
+.tagline{margin-top:8px;color:var(--muted)}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+nav.tabs .row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;text-decoration:none;color:var(--ink);font-weight:500;font-size:14px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+nav.tabs a:hover{border-color:var(--felt)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+section{scroll-margin-top:72px;display:grid;gap:16px;margin-bottom:44px}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-head .label{margin-left:auto}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+.stack{display:grid;gap:10px}
+
+/* range tool */
+.range-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:820px){.range-layout{grid-template-columns:1fr}}
+.seg-group{display:grid;gap:6px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.matrix-box{overflow-x:auto}
+.matrix{display:grid;grid-template-columns:repeat(13,minmax(26px,1fr));gap:2px;min-width:360px;font-family:var(--mono);font-weight:700}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.25vw,13px);border-radius:3px;background:var(--fold);color:var(--fold-ink);user-select:none}
+.cell.pair{box-shadow:inset 0 0 0 1px var(--line)}
+.cell.raise{background:var(--felt);color:var(--felt-ink)}
+.cell.value{background:var(--red);color:var(--red-ink)}
+.cell.bluff{background:repeating-linear-gradient(135deg,var(--red) 0 4px,var(--surface) 4px 7px);color:var(--ink);text-shadow:0 0 3px var(--surface),0 0 3px var(--surface)}
+.cell.call{background:var(--amber);color:var(--amber-ink)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.stat-big{font-family:var(--display);font-weight:800;font-size:40px;line-height:1}
+.note{font-size:14px;border-left:3px solid var(--felt);padding-left:10px}
+.matrix-axis{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* tables */
+.tbl-box{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+tr:last-child td{border-bottom:0}
+.hl td{background:var(--surface2)}
+
+/* calculators */
+.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+input[type=number],select{font:inherit;font-family:var(--mono);font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:4px}
+.readout div{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.readout b{display:block;font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.verdict{display:inline-flex;align-items:center;gap:8px;font-weight:700;padding:6px 12px;border-radius:999px;font-size:14px}
+.verdict.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.verdict.no{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.chip.ok{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.chip.mid{background:color-mix(in srgb,var(--amber) 28%,transparent);color:var(--ink)}
+.chip.no{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+
+/* lists */
+ul.clean,ol.clean{margin:0;padding-left:20px;display:grid;gap:6px}
+.rule{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding-block:8px;border-bottom:1px dashed var(--line)}
+.rule:last-child{border-bottom:0}
+.rule .k{font-family:var(--mono);font-weight:700;color:var(--felt);font-size:13px;padding-top:2px}
+.check{display:flex;gap:10px;align-items:flex-start;padding-block:7px;border-bottom:1px solid var(--line);cursor:pointer}
+.check:last-of-type{border-bottom:0}
+.check input{width:18px;height:18px;margin-top:2px;accent-color:var(--felt);flex:none}
+.check:has(input:checked) span{color:var(--muted);text-decoration:line-through}
+.btn{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);cursor:pointer}
+textarea{font:inherit;width:100%;min-height:140px;resize:vertical;background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px}
+.ptype{display:grid;gap:6px}
+.ptype .who{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ptype .stat{font-family:var(--mono);font-size:12px;color:var(--muted)}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style></head><body>
+<header class="esc-nav"><div class="in">
+  <a class="esc-brand" href="./"><img src="assets/logo.svg" alt="" width="28" height="28">Poker NL2</a>
+  <nav class="esc-links" aria-label="Secciones">
+    <a href="./">Inicio</a><a href="lecciones">Lecciones</a><a href="mesa">Mesa de práctica</a><a href="calculadoras" aria-current="page">Calculadoras</a>
+  </nav>
+</div></header>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="suits" aria-hidden="true">♠<span class="r">♥</span><span class="r">♦</span>♣</div>
+      <h1>Planillas de Poker</h1>
+      <p class="tagline">No Limit Hold'em · Cash 6-max · NL2–NL5 · stacks de 100 ciegas grandes</p>
+    </div>
+    <p class="label">Para tener abierto mientras jugás</p>
+  </header>
+
+  <nav class="tabs" aria-label="Secciones">
+    <div class="row">
+      <a href="#rangos">Rangos</a>
+      <a href="#matematica">Outs y pot odds</a>
+      <a href="#postflop">Postflop</a>
+      <a href="#rivales">Tipos de rival</a>
+      <a href="#bankroll">Bankroll</a>
+      <a href="#sesion">Antes de jugar</a>
+      <a href="#revision">Revisión</a>
+    </div>
+  </nav>
+
+  <!-- RANGOS -->
+  <section id="rangos">
+    <div class="sec-head"><h2>Rangos preflop</h2><span class="label">Arriba a la derecha: suited · abajo a la izquierda: offsuit</span></div>
+    <div class="range-layout">
+      <div class="panel stack">
+        <div class="matrix-box"><div class="matrix" id="matrix" role="img" aria-label="Tabla de rangos 13 por 13"></div></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="panel stack">
+        <div class="seg-group">
+          <span class="label">Abrir (nadie entró)</span>
+          <div class="seg" data-group="open"></div>
+        </div>
+        <div class="seg-group">
+          <span class="label">Frente a una subida</span>
+          <div class="seg" data-group="vs"></div>
+        </div>
+        <div class="seg-group">
+          <span class="label">Te hicieron 3-bet</span>
+          <div class="seg" data-group="v3"></div>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--line);width:100%;margin:4px 0">
+        <div>
+          <div class="label" id="sc-title">UTG</div>
+          <div class="stat-big num" id="sc-pct">0%</div>
+          <div class="muted" style="font-size:13px" id="sc-combos">de las manos</div>
+        </div>
+        <p class="note" id="sc-note"></p>
+        <p class="mono muted" style="font-size:12px" id="sc-text"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MATEMATICA -->
+  <section id="matematica">
+    <div class="sec-head"><h2>Outs y pot odds</h2><span class="label">Pagá solo si tu equity &gt; la necesaria</span></div>
+
+    <div class="panel stack">
+      <h3>Calculadora rápida</h3>
+      <div class="field-row">
+        <label class="f" for="po-pot">Bote antes de la apuesta<input id="po-pot" type="number" min="0" step="0.5" value="12"></label>
+        <label class="f" for="po-bet">Apuesta del rival<input id="po-bet" type="number" min="0" step="0.5" value="3"></label>
+        <label class="f" for="po-outs">Tus outs<input id="po-outs" type="number" min="0" max="20" step="1" value="8"></label>
+        <label class="f" for="po-street">Estás en<select id="po-street">
+          <option value="turn">Turn → ver river</option>
+          <option value="flop1">Flop → ver turn</option>
+          <option value="flop2">Flop all-in → turn y river</option>
+        </select></label>
+      </div>
+      <div class="readout">
+        <div><span class="label">Necesitás</span><b id="po-need">–</b></div>
+        <div><span class="label">Tu equity</span><b id="po-eq">–</b></div>
+        <div><span class="label">Regla rápida</span><b id="po-quick">–</b></div>
+      </div>
+      <div><span class="verdict" id="po-verdict">–</span> <span class="muted" style="font-size:13px">Sin contar implied odds.</span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel stack">
+        <h3>Equity que necesitás para pagar</h3>
+        <div class="tbl-box"><table>
+          <thead><tr><th>Apuesta del rival</th><th class="n">Pagar necesita</th><th class="n">Tu farol necesita que tire</th></tr></thead>
+          <tbody id="odds-body"></tbody>
+        </table></div>
+        <p class="muted" style="font-size:13px">Fórmula: lo que pagás ÷ (bote + apuesta + lo que pagás).</p>
+      </div>
+      <div class="panel stack">
+        <h3>Outs más comunes</h3>
+        <div class="tbl-box"><table>
+          <thead><tr><th>Proyecto</th><th class="n">Outs</th><th class="n">1 carta</th><th class="n">2 cartas</th></tr></thead>
+          <tbody id="outs-body"></tbody>
+        </table></div>
+        <p class="muted" style="font-size:13px">Regla del 2 y del 4: outs × 2 por cada carta que ves. × 4 solo si vas all-in en el flop.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- POSTFLOP -->
+  <section id="postflop">
+    <div class="sec-head"><h2>Postflop</h2><span class="label">Apostás por valor o de farol. Si no es ninguno, pasás.</span></div>
+    <div class="panel">
+      <h3 style="margin-bottom:8px">C-bet según la textura del board</h3>
+      <div class="tbl-box"><table>
+        <thead><tr><th>Board</th><th>Ejemplo</th><th>Favorece a</th><th>Qué hacer si subiste preflop</th></tr></thead>
+        <tbody>
+          <tr><td><b>Seco</b></td><td class="mono">K♣ 7<span style="color:var(--red)">♦</span> 2<span style="color:var(--red)">♥</span></td><td>El que subió</td><td>C-bet seguido y chica: <b>1/3 del bote</b></td></tr>
+          <tr><td><b>Mojado</b></td><td class="mono">9♠ 8♠ 7<span style="color:var(--red)">♥</span></td><td>El que pagó</td><td>Apostá menos seguido. Con manos fuertes, <b>2/3 a 3/4</b> para cobrar y proteger</td></tr>
+          <tr><td><b>Multiway</b></td><td class="muted">2 o más rivales</td><td>Nadie</td><td>Casi solo con manos buenas. Faroles mínimos</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h3 style="margin-bottom:6px">Cómo ganarles en NL2</h3>
+        <div class="rule"><span class="k">+</span><span>Apostá por valor <b>más grande y más seguido</b>. Top pair buen kicker: tres calles.</span></div>
+        <div class="rule"><span class="k">−</span><span>Faroleá poco, sobre todo en el river. Acá se paga demasiado.</span></div>
+        <div class="rule"><span class="k">!</span><span>Si un pasivo sube o apuesta fuerte en turn/river, <b>tiene la mano</b>. Con una pareja, tirá.</span></div>
+        <div class="rule"><span class="k">~</span><span>Faroles: elegí manos con proyecto (semi-farol). Si te pagan, todavía podés ligar.</span></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:6px">Preguntas en cada calle</h3>
+        <div class="rule"><span class="k">1</span><span>¿Qué manos tiene el rival, dado todo lo que hizo hasta ahora?</span></div>
+        <div class="rule"><span class="k">2</span><span>Si apuesto, ¿me pagan manos peores o se tiran manos mejores?</span></div>
+        <div class="rule"><span class="k">3</span><span>¿Qué tamaño cobra más a las manos que me pagan?</span></div>
+        <div class="rule"><span class="k">4</span><span>Si me apuesta, ¿cuánta equity necesito? ¿La tengo?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIVALES -->
+  <section id="rivales">
+    <div class="sec-head"><h2>Tipos de rival</h2><span class="label">Tomá nota de cada uno en la mesa</span></div>
+    <div class="grid2">
+      <div class="panel ptype"><div class="who"><h3>Pagador / pescado</h3><span class="stat">juega muchas manos · paga todo</span></div>
+        <p>Valor grande en las tres calles, incluso con manos medias. <b>Casi nunca le farolees.</b> Si un día sube fuerte, creele.</p></div>
+      <div class="panel ptype"><div class="who"><h3>Nit</h3><span class="stat">juega poquísimas manos</span></div>
+        <p>Robale las ciegas seguido. Si sube o hace 3-bet, tiene QQ+ o AK: <b>tirá lo marginal</b>.</p></div>
+      <div class="panel ptype"><div class="who"><h3>Regular (TAG)</h3><span class="stat">tight y agresivo</span></div>
+        <p>Jugá rangos estándar. Contra él tienen sentido los 3-bets de farol (A5s, A4s). Evitá guerras de ego.</p></div>
+      <div class="panel ptype"><div class="who"><h3>Maníaco</h3><span class="stat">sube y apuesta todo</span></div>
+        <p>Esperá manos buenas y dejalo apostar por vos. Pagá más liviano; no le farolees.</p></div>
+    </div>
+  </section>
+
+  <!-- BANKROLL -->
+  <section id="bankroll">
+    <div class="sec-head"><h2>Bankroll</h2><span class="label">Subís con 40 buy-ins · bajás con menos de 25</span></div>
+    <div class="grid2">
+      <div class="panel stack">
+        <label class="f" for="br-amount">Tu bankroll en dólares<input id="br-amount" type="number" min="0" step="1" value="100"></label>
+        <div class="tbl-box"><table>
+          <thead><tr><th>Límite</th><th class="n">Buy-in</th><th class="n">Buy-ins</th><th>Estado</th></tr></thead>
+          <tbody id="br-body"></tbody>
+        </table></div>
+      </div>
+      <div class="panel stack">
+        <div><span class="label">Jugá en</span><div class="stat-big" id="br-rec">NL2</div></div>
+        <div class="readout">
+          <div><span class="label">Stop-loss por sesión</span><b id="br-stop">$6</b></div>
+          <div><span class="label">Para subir al siguiente</span><b id="br-next">$200</b></div>
+        </div>
+        <ul class="clean">
+          <li>Formatos: cash 30–40 buy-ins · Spin &amp; Go 100+ · torneos 100–200.</li>
+          <li>Nunca depositás para recuperar lo perdido.</li>
+          <li>Perder 10–20 buy-ins seguidos puede ser varianza normal. Juzgá decisiones, no resultados.</li>
+          <li>Configurá límites de depósito y de tiempo en la sala antes de jugar.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SESION -->
+  <section id="sesion">
+    <div class="sec-head"><h2>Antes de jugar</h2><span class="label">Si alguna no se cumple, hoy no se juega</span></div>
+    <div class="grid2">
+      <div class="panel">
+        <div id="checklist"></div>
+        <div style="margin-top:12px"><button class="btn" id="ck-reset" type="button">Reiniciar checklist</button></div>
+      </div>
+      <div class="panel stack">
+        <h3>Foco para las primeras 5.000 manos</h3>
+        <ol class="clean">
+          <li>Respetar los rangos preflop de la tabla.</li>
+          <li>Apostar fuerte por valor contra los pagadores.</li>
+          <li>Tirar cuando un pasivo se pone agresivo en el river.</li>
+        </ol>
+        <h3 style="margin-top:8px">Durante la sesión</h3>
+        <ul class="clean">
+          <li>Stop-loss de 3 buy-ins: la sesión se termina, no es una pausa.</li>
+          <li>60–90 minutos, 1 o 2 mesas.</li>
+          <li>Anotá las manos dudosas; no las analices en la mesa.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVISION -->
+  <section id="revision">
+    <div class="sec-head"><h2>Revisión de manos</h2><span class="label">3 a 5 manos después de cada sesión</span></div>
+    <div class="grid2">
+      <div class="panel">
+        <h3 style="margin-bottom:6px">Método de 5 pasos</h3>
+        <div class="rule"><span class="k">1</span><span><b>Contexto:</b> posiciones, stacks, tipo de rival.</span></div>
+        <div class="rule"><span class="k">2</span><span><b>Preflop:</b> ¿la mano estaba en mi rango?</span></div>
+        <div class="rule"><span class="k">3</span><span><b>Rango del rival</b> en cada calle.</span></div>
+        <div class="rule"><span class="k">4</span><span><b>Objetivo de cada apuesta:</b> valor, farol o ninguno. ¿El tamaño tenía sentido?</span></div>
+        <div class="rule"><span class="k">5</span><span><b>Conclusión en una línea</b> para la lista de abajo.</span></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:6px">Mis reglas aprendidas</h3>
+        <div class="rule"><span class="k">→</span><span>Top pair que queda segunda pareja en el river, contra un pasivo que apuesta el bote: tirar.</span></div>
+        <div class="rule"><span class="k">→</span><span>Overpair en board mojado (AA en 9-8-7): apostar 2/3–3/4, no pasar.</span></div>
+        <div class="rule"><span class="k">→</span><span>Comparar bien: pago solo si mi equity supera a la necesaria.</span></div>
+        <div class="rule"><span class="k">→</span><span>Contra pagadores: valor grande y cero faroles.</span></div>
+        <div class="rule"><span class="k">→</span><span>Stop-loss alcanzado: la sesión terminó por hoy.</span></div>
+      </div>
+    </div>
+    <div class="panel stack">
+      <label class="f" for="notes">Tus notas (se guardan en este navegador)</label>
+      <textarea id="notes" placeholder="Ej.: 12/10 · BTN vs BB · pagué river con segunda pareja contra pasivo. Conclusión: …"></textarea>
+    </div>
+  </section>
+
+  <footer>Rangos simplificados para empezar en NL2–NL5 6-max. Revisá en cada sala qué programas externos están permitidos antes de instalar nada.</footer>
+</div>
+
+<script>
+(function(){
+  const R='AKQJT98765432'.split('');
+  const ix=c=>R.indexOf(c);
+  function expand(tok){
+    tok=tok.trim(); if(!tok) return [];
+    if(tok.includes('-')){
+      const [a,b]=tok.split('-');
+      const out=[];
+      if(a[0]===a[1]){ for(let i=ix(a[0]);i<=ix(b[0]);i++) out.push(R[i]+R[i]); }
+      else { for(let i=ix(a[1]);i<=ix(b[1]);i++) out.push(a[0]+R[i]+a[2]); }
+      return out;
+    }
+    const plus=tok.endsWith('+'); if(plus) tok=tok.slice(0,-1);
+    if(tok.length===2){
+      if(!plus) return [tok];
+      const out=[]; for(let i=0;i<=ix(tok[0]);i++) out.push(R[i]+R[i]); return out;
+    }
+    if(!plus) return [tok];
+    const out=[]; for(let i=ix(tok[0])+1;i<=ix(tok[1]);i++) out.push(tok[0]+R[i]+tok[2]); return out;
+  }
+  const parse=s=>new Set(s.split(',').flatMap(expand));
+
+  const SC={
+    UTG:{g:'open',title:'Abrir desde UTG',acts:{raise:'77+,ATs+,KJs+,QJs,JTs,AJo+,KQo'},note:'Abrí a 2.5bb. Es el rango más cerrado: tenés 5 jugadores detrás.'},
+    MP:{g:'open',title:'Abrir desde MP',acts:{raise:'55+,A8s+,A5s,KTs+,QTs+,JTs,T9s,ATo+,KJo+'},note:'Abrí a 2.5bb.'},
+    CO:{g:'open',title:'Abrir desde CO',acts:{raise:'22+,A2s+,K9s+,Q9s+,J9s+,T9s,98s,87s,ATo+,KTo+,QJo'},note:'Abrí a 2.5bb. Solo quedan BTN y ciegas.'},
+    BTN:{g:'open',title:'Abrir desde BTN',acts:{raise:'22+,A2s+,K5s+,Q8s+,J8s+,T8s+,97s+,86s+,76s,65s,A7o+,K9o+,Q9o+,J9o+,T9o'},note:'Abrí a 2.5bb. La mejor posición: robá ciegas seguido.'},
+    SB:{g:'open',title:'Abrir desde SB',acts:{raise:'22+,A2s+,K9s+,Q9s+,J9s+,T9s,98s,87s,ATo+,KTo+,QJo'},note:'Mismo rango que CO, pero abrí a 3bb: vas a jugar fuera de posición.'},
+    early:{g:'vs',label:'de UTG / MP',title:'Frente a subida de UTG o MP',acts:{value:'QQ+,AKs,AKo',call:'JJ-88,AQs'},note:'3-bet a 3x en posición, 4x desde las ciegas. Pagá solo si vas a actuar después que él.'},
+    late:{g:'vs',label:'de CO / BTN',title:'Frente a subida de CO o BTN',acts:{value:'TT+,AQs+,AQo+',bluff:'A5s,A4s',call:'99-77,AJs,KQs,QJs,JTs'},note:'Contra pagadores sacá los faroles (A5s, A4s). Pagar: solo en posición.'},
+    v3:{g:'v3',label:'Abrí y me resubieron',title:'Frente a un 3-bet',acts:{value:'KK+,AKs,AKo',call:'QQ-TT,AQs,KQs,QJs'},note:'4-bet a unas 2.2–2.5 veces el 3-bet. En NL2, contra un nit, QQ va mejor pagando. Pagar solo en posición.'}
+  };
+  const LEG={raise:['Subir','var(--felt)'],value:['3-bet / 4-bet por valor','var(--red)'],bluff:['3-bet de farol','repeating-linear-gradient(135deg,var(--red) 0 3px,var(--surface) 3px 5px)'],call:['Pagar','var(--amber)'],fold:['Tirar','var(--fold)']};
+
+  const matrix=document.getElementById('matrix');
+  const cells={};
+  for(let i=0;i<13;i++)for(let j=0;j<13;j++){
+    const lab=i===j?R[i]+R[i]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
+    const d=document.createElement('div');
+    d.className='cell'+(i===j?' pair':'');
+    d.textContent=i===j?lab:lab;
+    d.title=lab;
+    matrix.appendChild(d); cells[lab]=d;
+  }
+  const combos=l=>l.length===2?6:(l[2]==='s'?4:12);
+
+  let current='UTG';
+  try{const s=localStorage.getItem('pp-sc'); if(s&&SC[s]) current=s;}catch(e){}
+
+  function render(){
+    const sc=SC[current];
+    const map={};
+    for(const [act,str] of Object.entries(sc.acts)) for(const h of parse(str)) map[h]=act;
+    let n=0;
+    for(const [lab,el] of Object.entries(cells)){
+      const a=map[lab];
+      el.className='cell'+(lab.length===2?' pair':'')+(a?' '+a:'');
+      if(a) n+=combos(lab);
+    }
+    document.getElementById('sc-title').textContent=sc.title;
+    document.getElementById('sc-pct').textContent=(n/1326*100).toFixed(1)+'%';
+    document.getElementById('sc-combos').textContent=n+' de 1326 combinaciones se juegan';
+    document.getElementById('sc-note').textContent=sc.note;
+    document.getElementById('sc-text').textContent=Object.entries(sc.acts).map(([a,s])=>LEG[a][0]+': '+s.replace(/,/g,', ')).join(' · ');
+    const acts=Object.keys(sc.acts).concat('fold');
+    document.getElementById('legend').innerHTML=acts.map(a=>`<span><i class="sw" style="background:${LEG[a][1]};${a==='fold'?'box-shadow:inset 0 0 0 1px var(--line)':''}"></i>${LEG[a][0]}</span>`).join('');
+    document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===current?'true':'false'));
+    try{localStorage.setItem('pp-sc',current);}catch(e){}
+  }
+  for(const [k,sc] of Object.entries(SC)){
+    const b=document.createElement('button');
+    b.type='button'; b.dataset.k=k; b.textContent=sc.label||k;
+    b.addEventListener('click',()=>{current=k;render();});
+    document.querySelector(`.seg[data-group="${sc.g}"]`).appendChild(b);
+  }
+  render();
+
+  // Odds tables
+  const pct=x=>(x*100).toFixed(1).replace('.0','')+'%';
+  const sizes=[['1/4 del bote',.25],['1/3 del bote',1/3],['1/2 del bote',.5],['2/3 del bote',2/3],['3/4 del bote',.75],['Bote completo',1],['1.5 botes',1.5],['2 botes (overbet)',2]];
+  document.getElementById('odds-body').innerHTML=sizes.map(([l,f])=>`<tr${[1/3,.5,2/3,1].includes(f)?' class="hl"':''}><td>${l}</td><td class="n">${pct(f/(1+2*f))}</td><td class="n">${pct(f/(1+f))}</td></tr>`).join('');
+  const one=(o,unseen)=>o/unseen;
+  const two=o=>1-((47-o)*(46-o))/(47*46);
+  const draws=[['Pareja → trío',2],['Gutshot (escalera de panza)',4],['Dos sobrecartas',6],['Escalera abierta',8],['Proyecto de color',9],['Color + gutshot',12],['Color + escalera abierta',15]];
+  document.getElementById('outs-body').innerHTML=draws.map(([l,o])=>`<tr${o===8||o===9?' class="hl"':''}><td>${l}</td><td class="n">${o}</td><td class="n">${pct(one(o,46))}</td><td class="n">${pct(two(o))}</td></tr>`).join('');
+
+  // Pot odds calc
+  const $=id=>document.getElementById(id);
+  function calc(){
+    const pot=+$('po-pot').value||0, bet=+$('po-bet').value||0, outs=Math.max(0,Math.min(20,+$('po-outs').value||0)), st=$('po-street').value;
+    const need=bet>0?bet/(pot+2*bet):0;
+    const eq=st==='turn'?outs/46:st==='flop1'?outs/47:two(outs);
+    const quick=st==='flop2'?outs*4:outs*2;
+    $('po-need').textContent=pct(need);
+    $('po-eq').textContent=pct(eq);
+    $('po-quick').textContent=quick+'%';
+    const v=$('po-verdict');
+    if(bet<=0){v.className='verdict';v.textContent='Poné la apuesta del rival';return;}
+    const ok=eq>need;
+    v.className='verdict '+(ok?'ok':'no');
+    v.textContent=ok?'Pagá: '+pct(eq)+' > '+pct(need):'Tirá: '+pct(eq)+' < '+pct(need);
+  }
+  ['po-pot','po-bet','po-outs','po-street'].forEach(id=>$(id).addEventListener('input',calc));
+  calc();
+
+  // Bankroll
+  const LIM=[['NL2',2],['NL5',5],['NL10',10],['NL25',25],['NL50',50]];
+  function br(){
+    const b=+$('br-amount').value||0;
+    let rec=null;
+    $('br-body').innerHTML=LIM.map(([n,bi])=>{
+      const k=b/bi; let chip;
+      if(k>=40){chip='<span class="chip ok">Podés jugar</span>'; rec=[n,bi];}
+      else if(k>=25){chip='<span class="chip mid">Justo: bajá si perdés</span>';}
+      else chip='<span class="chip no">Todavía no</span>';
+      return `<tr><td><b>${n}</b></td><td class="n">$${bi}</td><td class="n">${Math.floor(k)}</td><td>${chip}</td></tr>`;
+    }).join('');
+    if(!rec && b>=60) rec=['NL2',2];
+    if(rec){
+      $('br-rec').textContent=rec[0];
+      $('br-stop').textContent='$'+(rec[1]*3);
+      const i=LIM.findIndex(l=>l[0]===rec[0]);
+      $('br-next').textContent=i<LIM.length-1?'$'+LIM[i+1][1]*40+' ('+LIM[i+1][0]+')':'—';
+    } else {
+      $('br-rec').textContent='Todavía no';
+      $('br-stop').textContent='—';
+      $('br-next').textContent='$60 (NL2)';
+    }
+  }
+  $('br-amount').addEventListener('input',br); br();
+
+  // Checklist
+  const ITEMS=['Estoy descansado, sin alcohol y sin enojo encima.','Tengo el bankroll para este límite (30 buy-ins o más).','Stop-loss de 3 buy-ins y sesión de 60 a 90 minutos.','Voy a jugar 1 o 2 mesas, no más.','Tengo abierta esta planilla de rangos.','Voy a anotar 3 a 5 manos para revisar después.'];
+  let st={}; try{st=JSON.parse(localStorage.getItem('pp-ck')||'{}');}catch(e){}
+  $('checklist').innerHTML=ITEMS.map((t,i)=>`<label class="check" for="ck${i}"><input type="checkbox" id="ck${i}" ${st[i]?'checked':''}><span>${t}</span></label>`).join('');
+  ITEMS.forEach((_,i)=>$('ck'+i).addEventListener('change',e=>{st[i]=e.target.checked;try{localStorage.setItem('pp-ck',JSON.stringify(st));}catch(err){}}));
+  $('ck-reset').addEventListener('click',()=>{st={};ITEMS.forEach((_,i)=>$('ck'+i).checked=false);try{localStorage.removeItem('pp-ck');}catch(e){}});
+
+  // Notes
+  const n=$('notes');
+  try{n.value=localStorage.getItem('pp-notes')||'';}catch(e){}
+  n.addEventListener('input',()=>{try{localStorage.setItem('pp-notes',n.value);}catch(e){}});
+})();
+</script>
+<!-- ER-CREDIT:START · Pie de Estudio Raíz (no editar a mano: se regenera igual en todos los proyectos) -->
+<style>
+.er-credit{all:initial;display:block;box-sizing:border-box;width:100%;margin:0;padding:18px 16px 22px;background:#0B283D;color:#DCE3E8;font:400 13px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center;position:relative;z-index:1}
+.er-credit *{box-sizing:border-box}
+.er-credit a{color:#F9F6F1;text-decoration:none}
+.er-credit a:hover,.er-credit a:focus-visible{text-decoration:underline;text-underline-offset:2px}
+.er-credit__brand{display:inline-flex;align-items:center;gap:10px;font-size:14px}
+.er-credit__brand img{width:30px;height:30px;border-radius:7px;display:block}
+.er-credit__brand strong{font-weight:600;letter-spacing:.2px}
+.er-credit__links{margin:8px 0 0;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px}
+.er-credit__legal{margin:8px 0 0;font-size:11.5px;color:#9FB0BC}
+</style>
+<footer class="er-credit" aria-label="Créditos">
+  <a class="er-credit__brand" href="https://estudio-raiz.vercel.app" target="_blank" rel="noopener">
+    <img src="assets/estudio-raiz.svg" alt="" width="30" height="30">
+    <span>Desarrollado por <strong>Estudio Raíz</strong></span>
+  </a>
+  <p class="er-credit__links">
+    <a href="https://wa.me/5492216823580" target="_blank" rel="noopener">WhatsApp</a>
+    <a href="mailto:daniel.franco.dib@gmail.com">Email</a>
+    <a href="https://estudio-raiz.vercel.app/privacidad" target="_blank" rel="noopener">Privacidad</a>
+    <a href="https://estudio-raiz.vercel.app/terminos" target="_blank" rel="noopener">Términos</a>
+  </p>
+  <p class="er-credit__legal">© 2026 Estudio Raíz · Marca en trámite ante el INPI (Acta N.º 4780707) · San Miguel de Tucumán, Argentina</p>
+</footer>
+<!-- ER-CREDIT:END -->
+
+</body></html>
